@@ -1,0 +1,34 @@
+# Caddyfile
+# Lắng nghe trên cổng mà Render cung cấp (biến môi trường PORT)
+:{$PORT} {
+    # Log để debug (có thể tắt trong production)
+    log {
+        output stdout
+        format console
+    }
+
+    # Health check endpoint (không cần xác thực)
+    handle /health {
+        respond "OK" 200
+    }
+
+    # Matcher kiểm tra Authorization header
+    @authenticated {
+        header Authorization "Bearer {$OLLAMA_API_KEY}"
+    }
+
+    # Nếu có token hợp lệ, chuyển tiếp đến Ollama
+    handle @authenticated {
+        reverse_proxy localhost:11434 {
+            transport http {
+                read_timeout 600s
+                write_timeout 600s
+            }
+        }
+    }
+
+    # Mọi request không có token hợp lệ đều trả về 401
+    handle {
+        respond `{"error": "Unauthorized. Provide a valid API key in the Authorization header."}` 401
+    }
+}
