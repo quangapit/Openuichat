@@ -1,7 +1,7 @@
 # Caddyfile
 # Lắng nghe trên cổng mà Render cung cấp (biến môi trường PORT)
 :{$PORT} {
-    # Log để debug (có thể tắt trong production)
+    # Log để debug
     log {
         output stdout
         format console
