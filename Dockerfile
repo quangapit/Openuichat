@@ -1,22 +1,33 @@
 # ============================================
-# Stage 1: Lấy Caddy binary từ image chính thức
+# Stage 1: Tự build Caddy từ nguồn
 # ============================================
-FROM caddy:2 AS caddy-builder
+FROM golang:1.23-alpine AS caddy-builder
 
-# Không set capabilities trên Caddy binary để tránh lỗi trên Render
-ENV XCADDY_SETCAP 0
+# Cài đặt các gói cần thiết để build
+RUN apk add --no-cache git gcc musl-dev
+
+# Cài đặt xcaddy
+RUN go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
+
+# ⚠️ QUAN TRỌNG: Tắt setcap để binary không có file capabilities
+ENV XCADDY_SETCAP=0
+
+# Build Caddy (không kèm plugin nào)
+RUN xcaddy build
 
 # ============================================
 # Stage 2: Image chính (Ollama + Caddy)
 # ============================================
 FROM ollama/ollama:latest
 
-# Copy Caddy binary từ stage 1
-COPY --from=caddy-builder /usr/bin/caddy /usr/bin/caddy
+# Copy Caddy binary đã build từ stage 1
+COPY --from=caddy-builder /go/caddy /usr/bin/caddy
 
-# Đảm bảo binary Caddy có quyền thực thi và xóa capabilities
-RUN chmod +x /usr/bin/caddy && \
-    setcap -r /usr/bin/caddy 2>/dev/null || true
+# Đảm bảo quyền thực thi
+RUN chmod +x /usr/bin/caddy
+
+# Xóa mọi capabilities còn sót (lớp bảo hiểm thứ hai)
+RUN setcap -r /usr/bin/caddy 2>/dev/null || true
 
 # Tạo thư mục cấu hình cho Caddy
 RUN mkdir -p /etc/caddy
@@ -27,7 +38,7 @@ COPY Caddyfile /etc/caddy/Caddyfile
 # Copy script khởi động
 COPY start.sh /start.sh
 
-# ✅ QUAN TRỌNG: Chuyển đổi line ending (nếu có) và cấp quyền thực thi
+# Chuyển đổi line ending (nếu có) và cấp quyền thực thi
 RUN sed -i 's/\r$//' /start.sh && chmod +x /start.sh
 
 # Biến môi trường cho Ollama
@@ -38,5 +49,5 @@ ENV OLLAMA_KEEP_ALIVE=24h
 ENV PORT=10000
 EXPOSE 10000
 
-# ✅ SỬ DỤNG ENTRYPOINT TRỰC TIẾP (An toàn hơn CMD + shell)
+# Chạy script khởi động
 ENTRYPOINT ["/start.sh"]
