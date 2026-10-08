@@ -2,12 +2,12 @@ services:
   - type: web
     name: ollama-secure
     runtime: docker
-    plan: 4c-16g          # <-- THAY ĐỔI Ở ĐÂY (trước là 'scale')
+    plan: 12c-24g          # Gói Compute Plan hợp lệ (4 CPU, 16 GB RAM)
     dockerfilePath: ./Dockerfile
     healthCheckPath: /health
     envVars:
       - key: OLLAMA_API_KEY
-        generateValue: true
+        generateValue: true   # Render tự động tạo key ngẫu nhiên
       - key: PORT
         value: 10000
       - key: OLLAMA_HOST
