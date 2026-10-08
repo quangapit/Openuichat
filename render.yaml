@@ -2,14 +2,12 @@ services:
   - type: web
     name: ollama-secure
     runtime: docker
-    plan: scale
+    plan: 4c-16g          # <-- THAY ĐỔI Ở ĐÂY (trước là 'scale')
     dockerfilePath: ./Dockerfile
     healthCheckPath: /health
     envVars:
       - key: OLLAMA_API_KEY
-        generateValue: true   # Render tự động tạo key ngẫu nhiên
-        # Hoặc set thủ công:
-        # value: "sk-your-super-secret-key-here"
+        generateValue: true
       - key: PORT
         value: 10000
       - key: OLLAMA_HOST
@@ -19,4 +17,4 @@ services:
     disk:
       name: ollama-models
       mountPath: /root/.ollama
-      sizeGB: 50   # Điều chỉnh tùy nhu cầu (20-100GB)
+      sizeGB: 50
