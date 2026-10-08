@@ -17,11 +17,11 @@ done
 # ============================================
 # Tự động pull model (bỏ comment nếu muốn dùng)
 # ============================================
-# MODEL="qwen2.5-coder:7b"
-# if ! ollama list | grep -q "$MODEL"; then
-#   echo "📥 Đang pull model $MODEL..."
-#   ollama pull "$MODEL" || echo "⚠️ Pull model thất bại."
-# fi
+ MODEL="qwen2.5-coder:14b"
+ if ! ollama list | grep -q "$MODEL"; then
+   echo "📥 Đang pull model $MODEL..."
+   ollama pull "$MODEL" || echo "⚠️ Pull model thất bại."
+ fi
 
 echo "🔐 Khởi động proxy trên cổng $PORT..."
 exec proxy
