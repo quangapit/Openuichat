@@ -25,11 +25,12 @@ RUN chmod +x /start.sh
 ENV OLLAMA_HOST=0.0.0.0:11434
 ENV OLLAMA_KEEP_ALIVE=24h
 
-# Cổng mặc định (Render sẽ inject PORT, nhưng đặt mặc định để chạy local)
+# Cổng mặc định (Render sẽ inject PORT)
 ENV PORT=10000
-
-# Expose cổng mà Render yêu cầu
 EXPOSE 10000
 
-# Khởi chạy
+# ⚠️ QUAN TRỌNG: Ghi đè ENTRYPOINT mặc định của Ollama
+# Base image ollama/ollama có ENTRYPOINT ["/bin/ollama"]
+# Nếu không ghi đè, CMD sẽ bị hiểu là tham số của ollama → lỗi "unknown command"
+ENTRYPOINT ["/bin/sh", "-c"]
 CMD ["/start.sh"]
