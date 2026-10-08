@@ -3,8 +3,7 @@
 # ============================================
 FROM caddy:2 AS caddy-builder
 
-# ⚠️ QUAN TRỌNG: Không set capabilities trên Caddy binary
-# Render không cho phép exec binary có file capabilities
+# Không set capabilities trên Caddy binary để tránh lỗi trên Render
 ENV XCADDY_SETCAP 0
 
 # ============================================
@@ -15,11 +14,9 @@ FROM ollama/ollama:latest
 # Copy Caddy binary từ stage 1
 COPY --from=caddy-builder /usr/bin/caddy /usr/bin/caddy
 
-# Đảm bảo binary có quyền thực thi
-RUN chmod +x /usr/bin/caddy
-
-# Xóa mọi capabilities còn sót (nếu có)
-RUN setcap -r /usr/bin/caddy 2>/dev/null || true
+# Đảm bảo binary Caddy có quyền thực thi và xóa capabilities
+RUN chmod +x /usr/bin/caddy && \
+    setcap -r /usr/bin/caddy 2>/dev/null || true
 
 # Tạo thư mục cấu hình cho Caddy
 RUN mkdir -p /etc/caddy
@@ -29,7 +26,9 @@ COPY Caddyfile /etc/caddy/Caddyfile
 
 # Copy script khởi động
 COPY start.sh /start.sh
-RUN chmod +x /start.sh
+
+# ✅ QUAN TRỌNG: Chuyển đổi line ending (nếu có) và cấp quyền thực thi
+RUN sed -i 's/\r$//' /start.sh && chmod +x /start.sh
 
 # Biến môi trường cho Ollama
 ENV OLLAMA_HOST=0.0.0.0:11434
@@ -39,6 +38,5 @@ ENV OLLAMA_KEEP_ALIVE=24h
 ENV PORT=10000
 EXPOSE 10000
 
-# Ghi đè ENTRYPOINT mặc định của Ollama
-ENTRYPOINT ["/bin/sh", "-c"]
-CMD ["/start.sh"]
+# ✅ SỬ DỤNG ENTRYPOINT TRỰC TIẾP (An toàn hơn CMD + shell)
+ENTRYPOINT ["/start.sh"]
